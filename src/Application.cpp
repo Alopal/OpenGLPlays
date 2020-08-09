@@ -44,6 +44,14 @@ static int createShader(const std::string& vertexShader, const std::string& frag
     return program;
 }
 
+static void keyPressed(GLFWwindow* window, int key, int scancode, int action, int mode)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+}
+
 int main(void)
 {
     GLFWwindow* window;
@@ -63,6 +71,9 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    /* Bind a simple function on keyPressed */
+    glfwSetKeyCallback(window, keyPressed);
+
     /* Initialize GLEW library */
     if (glewInit() != GLEW_OK)
         std::cout << "Error in GLEW init" << std::endl;
@@ -80,15 +91,24 @@ int main(void)
          0.25f, 0.25f,
     };
 
+    // step 1 we generate buffer. In this case one buffer.   
     glGenBuffers(1, &bufferTriangles);
-    glBindBuffer(GL_ARRAY_BUFFER, bufferTriangles);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), positionsTriangles, GL_STATIC_DRAW);
 
+    // step 2 we bind generated buffer to a target
+    glBindBuffer(GL_ARRAY_BUFFER, bufferTriangles);
+
+    /* step 3 we assign data to a buffer and describe the size of it, give it data. 
+       Also we specify as close as possible its usage type and frequency. */
+    glNamedBufferData(bufferTriangles, sizeof(float) * 12, &positionsTriangles, GL_STREAM_DRAW);
+
+    //then we enable vertex attribute array so we can use that binded buffer of GL_ARRAY_BUFFER
     glEnableVertexAttribArray(0);
+
+    //and finally we describe how vertex should go through buffer data, from which position, what type of data and data stride
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 
     std::string vertexShader = 
-        "#version 330 core\n"
+        "#version 440 core\n"
         "\n"
         "layout(location = 0) in vec4 position;\n"
         "\n"
@@ -97,7 +117,7 @@ int main(void)
         "   gl_Position = position;\n"
         "}\n";
     std::string fragmentShader = 
-        "#version 330 core\n"
+        "#version 440 core\n"
         "\n"
         "layout(location = 0) out vec4 color;\n"
         "\n"
